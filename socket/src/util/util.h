@@ -16,6 +16,4 @@
 
 std::string trim_end(const std::string string);
 
-std::string uuid();
-
 #endif /* util_h */
