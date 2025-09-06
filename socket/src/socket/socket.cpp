@@ -312,13 +312,13 @@ namespace mysocket {
         return _recv(this->_file_descriptor);
     }
 
-    std::string udp_socket::recvfrom() {
-        char      buff[2048];
+    std::string udp_socket::recvfrom() const {
+        char      buff[1024];
         socklen_t addrlen = sizeof(* this->_address);
         ssize_t   len = ::recvfrom(
             this->_file_descriptor,
             (char *)buff,
-            2048,
+            1024,
             MSG_WAITALL,
             (struct sockaddr *)this->_address,
             &addrlen
@@ -340,7 +340,7 @@ namespace mysocket {
         return _send(this->_file_descriptor, message);
     }
 
-    int udp_socket::sendto(const std::string message) {
+    int udp_socket::sendto(const std::string message) const {
         ssize_t len = ::sendto(
             this->_file_descriptor,
             (const char *)message.c_str(),
