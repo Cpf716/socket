@@ -134,9 +134,9 @@ namespace mysocket {
 
         void        close();
 
-        std::string recvfrom();
+        std::string recvfrom() const;
 
-        int         sendto(const std::string message);
+        int         sendto(const std::string message) const;
     protected:
         // Member Fields
 
