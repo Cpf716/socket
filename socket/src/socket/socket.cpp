@@ -108,9 +108,9 @@ namespace mysocket {
             throw mysocket::error(errno);
         }
         
-        this->_thread = std::thread([&]{
+        this->_listener = std::thread([&]{
             while (true) {
-                if (this->_done.load())
+                if (this->_shutdown.load())
                     return;
                 
                 // Returns nonnegative file descriptor or -1 for error
@@ -195,6 +195,16 @@ namespace mysocket {
         memset(this->_address, 0, sizeof(* this->_address));
     }
 
+    tcp_server::connection::~connection() { }
+
+    tcp_client::~tcp_client() { }
+
+    tcp_server::~tcp_server() { }
+
+    udp_client::~udp_client() { }
+
+    udp_server::~udp_server() { }
+
     // Member Functions
 
     int tcp_server::_find_connection(const struct connection* connection) {
@@ -227,21 +237,30 @@ namespace mysocket {
         this->_mutex.unlock();
     }
 
+    void tcp_server::connection::close() {
+        if (::close(this->_file_descriptor))
+            throw mysocket::error(errno);
+        
+        delete this;
+    }
+
     void tcp_client::close() {
         if (::close(this->_file_descriptor)) 
             throw mysocket::error(errno);
+
+        delete this;
     }
 
     void tcp_server::close() {
-        this->_done.store(true);
+        this->_shutdown.store(true);
         
         if (::close(this->_file_descriptor))
             throw mysocket::error(errno);
         
-        this->_thread.join();
+        this->_listener.join();
 
         for (size_t i = 0; i < this->_connections.size(); i++) {
-            if (::close(this->_connections[i]->file_descriptor()))
+            if (::close(this->_connections[i]->_file_descriptor))
                 throw mysocket::error(errno);
                 
             delete this->_connections[i];
@@ -269,13 +288,13 @@ namespace mysocket {
             throw mysocket::error("Unknown error");
         }
 
-        if (::close(connection->file_descriptor())) {
+        try {
+            connection->close();
+        } catch (mysocket::error& e) {
             this->_mutex.unlock();
 
-            throw mysocket::error(errno);
+            throw e;
         }
-        
-        delete connection;
 
         this->_connections.erase(this->_connections.begin() + index);
         this->_mutex.unlock();
@@ -285,15 +304,11 @@ namespace mysocket {
         return this->_errnum;
     }
 
-    int tcp_server::connection::file_descriptor() const {
-        return this->_file_descriptor;
-    }
-
-    std::string tcp_server::connection::recv() {
+    std::string tcp_server::connection::recv() const {
         return _recv(this->_file_descriptor);
     }
 
-    std::string tcp_client::recv() {
+    std::string tcp_client::recv() const {
         return _recv(this->_file_descriptor);
     }
 
@@ -317,11 +332,11 @@ namespace mysocket {
         return std::string(buff);
     }
 
-    int tcp_server::connection::send(const std::string message) {
+    int tcp_server::connection::send(const std::string message) const {
         return _send(this->_file_descriptor, message);
     }
 
-    int tcp_client::send(const std::string message) {
+    int tcp_client::send(const std::string message) const {
         return _send(this->_file_descriptor, message);
     }
 
