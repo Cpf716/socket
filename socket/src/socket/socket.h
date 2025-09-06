@@ -48,10 +48,14 @@ namespace mysocket {
 
         void        close();
 
-        std::string recv();
+        std::string recv() const;
 
-        int         send(const std::string message);
+        int         send(const std::string message) const;
     private:
+        // Constructors
+
+        ~tcp_client();
+
         // Member Fields
 
         struct sockaddr_in* _address;
@@ -62,21 +66,31 @@ namespace mysocket {
         // Typedef
 
         struct connection {
+            // Typdef
+
+            friend tcp_server;
+
             // Constructors
 
             connection(const int file_descriptor);
 
             // Member Functions
-            
-            int         file_descriptor() const;
 
-            std::string recv();
+            std::string recv() const;
 
-            int         send(const std::string message);
+            int         send(const std::string message) const;
         private:
+            // Constructors
+
+            ~connection();
+
             // Member Fields
 
-            int         _file_descriptor;
+            int _file_descriptor;
+
+            // Member Functions
+
+            void close();
         };
 
         // Constructors
@@ -93,16 +107,20 @@ namespace mysocket {
 
         void close(struct connection* connection);
     private:
+        // Constructors
+
+        ~tcp_server();
+
         // Member Fields
 
         struct sockaddr_in               _address;
         int                              _address_length;
         std::vector<connection*>         _connections;
-        std::atomic<bool>                _done = false;
         int                              _file_descriptor;
         std::function<void(connection*)> _handler = [](const struct connection* connection){};
-        std::thread                      _thread;
+        std::thread                      _listener;
         std::mutex                       _mutex;
+        std::atomic<bool>                _shutdown = false;
 
         // Member Functions
 
@@ -126,13 +144,21 @@ namespace mysocket {
         int                 _file_descriptor;
     };
 
-    struct udp_client: public udp_socket {
+    class udp_client: public udp_socket {
+        // Constructors
+
+        ~udp_client();
+    public:
         // Constructors
 
         udp_client(const std::string host, const int port);
     };
 
-    struct udp_server: public udp_socket {
+    class udp_server: public udp_socket {
+        // Constructors
+
+        ~udp_server();
+    public:
         // Constructors
 
         udp_server(const int port);
