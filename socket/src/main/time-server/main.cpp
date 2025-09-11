@@ -31,7 +31,7 @@ int main(int argc, const char* argv[]) {
     vector<tcp_server::connection*> connections;
 
     while (true) {
-        server->connections(connections);
+        connections = server->connections();
 
         if (connections.size())
             break;
