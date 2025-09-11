@@ -90,7 +90,7 @@ namespace mysocket {
 
             // Member Functions
 
-            void close();
+            void _close();
         };
 
         // Constructors
@@ -101,11 +101,11 @@ namespace mysocket {
 
         // Member Functions
 
-        void connections(std::vector<connection*>& connections);
+        void                     close();
 
-        void close();
+        void                     close(struct connection* connection);
 
-        void close(struct connection* connection);
+        std::vector<connection*> connections();
     private:
         // Constructors
 

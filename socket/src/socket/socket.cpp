@@ -207,6 +207,13 @@ namespace mysocket {
 
     // Member Functions
 
+    void tcp_server::connection::_close() {
+        if (::close(this->_file_descriptor))
+            throw mysocket::error(errno);
+
+        delete this;
+    }
+
     int tcp_server::_find_connection(const struct connection* connection) {
         return this->_find_connection(connection, 0, this->_connections.size());
     }
@@ -224,24 +231,6 @@ namespace mysocket {
             return this->_find_connection(connection, start, start + len);
         
         return this->_find_connection(connection, start + len + 1, end);
-    }
-
-    void tcp_server::connections(std::vector<connection*>& connections) {
-        connections.clear();
-
-        this->_mutex.lock();
-
-        for (struct connection* connection: this->_connections)
-            connections.push_back(connection);
-        
-        this->_mutex.unlock();
-    }
-
-    void tcp_server::connection::close() {
-        if (::close(this->_file_descriptor))
-            throw mysocket::error(errno);
-        
-        delete this;
     }
 
     void tcp_client::close() {
@@ -289,7 +278,7 @@ namespace mysocket {
         }
 
         try {
-            connection->close();
+            connection->_close();
         } catch (mysocket::error& e) {
             this->_mutex.unlock();
 
@@ -298,6 +287,16 @@ namespace mysocket {
 
         this->_connections.erase(this->_connections.begin() + index);
         this->_mutex.unlock();
+    }
+
+    std::vector<tcp_server::connection*> tcp_server::connections() {
+        this->_mutex.lock();
+
+        std::vector<connection*> temp = this->_connections;
+
+        this->_mutex.unlock();
+
+        return temp;
     }
 
     int error::errnum() const {
