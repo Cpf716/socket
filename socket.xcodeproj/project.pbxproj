@@ -28,7 +28,7 @@
 		9C2D52AC2E6A76F600F1F10E /* Exceptions for "socket" folder in "socket" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"src/main/file-transfer/main.cpp",
+				"src/example/file-transfer/main.cpp",
 			);
 			target = 9CFEC4732E692554007BF7AF /* socket */;
 		};

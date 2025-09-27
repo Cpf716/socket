@@ -9,13 +9,13 @@
 #define socket_h
 
 #include "util.h"
-#include <arpa/inet.h>          // inet_ptons
-#include <csignal>              // signal
+#include <arpa/inet.h>  // inet_ptons
+#include <csignal>      // signal
 #include <mutex>
-#include <netinet/in.h>         // sockaddr_in
-#include <sys/socket.h>         // socket
+#include <netinet/in.h> // sockaddr_in
+#include <sys/socket.h> // socket
 #include <thread>
-#include <unistd.h>             // close, read
+#include <unistd.h>     // close, read
 
 namespace mysocket {
     // Typedef
@@ -65,32 +65,33 @@ namespace mysocket {
     struct tcp_server {
         // Typedef
 
-        struct connection {
-            // Typdef
-
-            friend tcp_server;
-
+        class connection {
             // Constructors
 
-            connection(const int file_descriptor);
-
-            // Member Functions
-
-            std::string recv() const;
-
-            int         send(const std::string message) const;
-        private:
-            // Constructors
+            connection(tcp_server* parent, const int file_descriptor);
 
             ~connection();
 
             // Member Fields
 
-            int _file_descriptor;
+            int         _file_descriptor;
+            tcp_server* _parent = NULL;
 
             // Member Functions
 
             void _close();
+        public:
+            // Typdef
+
+            friend tcp_server;
+
+            // Member Functions
+
+            void        close();
+
+            std::string recv() const;
+
+            int         send(const std::string message) const;
         };
 
         // Constructors
@@ -103,7 +104,7 @@ namespace mysocket {
 
         void                     close();
 
-        void                     close(struct connection* connection);
+        void                     close(class connection* connection);
 
         std::vector<connection*> connections();
     private:
@@ -117,16 +118,16 @@ namespace mysocket {
         int                              _address_length;
         std::vector<connection*>         _connections;
         int                              _file_descriptor;
-        std::function<void(connection*)> _handler = [](const struct connection* connection){};
+        std::function<void(connection*)> _handler = [](const class connection* connection){};
         std::thread                      _listener;
         std::mutex                       _mutex;
         std::atomic<bool>                _shutdown = false;
 
         // Member Functions
 
-        int _find_connection(const struct connection* connection);
+        int _find_connection(const class connection* connection);
 
-        int _find_connection(const struct connection* connection, const size_t start, const size_t end);
+        int _find_connection(const class connection* connection, const size_t start, const size_t end);
     };
 
     struct udp_socket {

@@ -11,20 +11,28 @@
 using namespace mysocket;
 using namespace std;
 
+tcp_server* server = NULL;
+tcp_client* client = NULL;
+
+void onsignal(int signum) {
+    // Perform garbage collection
+    client->close();
+    server->close();
+}
+
 int main(int argc, const char* argv[]) {
+    signal(SIGINT, onsignal);
+    signal(SIGTERM, onsignal);
+
     // Initialize server
-    auto server = new tcp_server(8080);
+    server = new tcp_server(8080);
 
     thread([]() {
         // Connect to server
-        auto client = new tcp_client("localhost", 8080);
+        client = new tcp_client("127.0.0.1", 8080);
 
-        // Read date and time from the server
-        for (size_t i = 0; i < 10; i++)
+        while (true)
             cout << client->recv() << endl;
-
-        // Disconnect and perform garbage collection
-        client->close();
     }).detach();
 
     // Wait for connection
@@ -42,17 +50,8 @@ int main(int argc, const char* argv[]) {
         time_t now = time(0);
         char*  dt = ctime(&now);
 
-        try {
-            connections[0]->send(string(dt));
-            
-            // Client disconnected
-        } catch (mysocket::error& e) {
-            break;
-        }
+        connections[0]->send(string(dt));
 
         this_thread::sleep_for(chrono::milliseconds(1000));
     }
-
-    // Shutdown server and perform garbage collection
-    server->close();
 }
