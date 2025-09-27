@@ -34,7 +34,8 @@ namespace mysocket {
 
     // Constructors
 
-    tcp_server::connection::connection(const int file_descriptor) {
+    tcp_server::connection::connection(tcp_server* parent, const int file_descriptor) {
+        this->_parent = parent;
         this->_file_descriptor = file_descriptor;
     }
 
@@ -61,7 +62,7 @@ namespace mysocket {
         // Convert port to network byte order
         addr.sin_port = htons(port);
         
-        if (inet_pton(AF_INET, (host == "localhost" ? "127.0.0.1" : host).c_str(), &addr.sin_addr) == -1)
+        if (inet_pton(AF_INET, host.c_str(), &addr.sin_addr) == -1)
             throw mysocket::error(errno);
         
         // Returns 0 for success, -1 otherwise
@@ -121,7 +122,7 @@ namespace mysocket {
                 if (file_descriptor == -1)
                     continue;
 
-                struct connection* connection = new struct connection(file_descriptor);
+                class connection* connection = new class connection(this, file_descriptor);
                 
                 this->_mutex.lock();
                 this->_connections.push_back(connection);
@@ -156,7 +157,7 @@ namespace mysocket {
         // Convert port to network byte order
         this->_address->sin_port = htons(port);
         
-        if (inet_pton(AF_INET, (host == "localhost" ? "127.0.0.1" : host).c_str(), &this->_address->sin_addr) == -1) {
+        if (inet_pton(AF_INET, host.c_str(), &this->_address->sin_addr) == -1) {
             ::close(this->_file_descriptor);
             
             throw mysocket::error(errno);
@@ -214,11 +215,11 @@ namespace mysocket {
         delete this;
     }
 
-    int tcp_server::_find_connection(const struct connection* connection) {
+    int tcp_server::_find_connection(const class connection* connection) {
         return this->_find_connection(connection, 0, this->_connections.size());
     }
 
-    int tcp_server::_find_connection(const struct connection* connection, const size_t start, const size_t end) {
+    int tcp_server::_find_connection(const class connection* connection, const size_t start, const size_t end) {
         if (start == end)
             return -1;
         
@@ -231,6 +232,10 @@ namespace mysocket {
             return this->_find_connection(connection, start, start + len);
         
         return this->_find_connection(connection, start + len + 1, end);
+    }
+
+    void tcp_server::connection::close() {
+        this->_parent->close(this);
     }
 
     void tcp_client::close() {
@@ -266,7 +271,7 @@ namespace mysocket {
         delete this;
     }
 
-    void tcp_server::close(struct connection* connection) {
+    void tcp_server::close(class connection* connection) {
         this->_mutex.lock();
         
         int index = this->_find_connection(connection);
