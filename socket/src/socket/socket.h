@@ -25,8 +25,6 @@ namespace mysocket {
 
         error(const int errnum);
 
-        error(const std::string what);
-
         // Member Fields
 
         int         errnum() const;
@@ -118,10 +116,10 @@ namespace mysocket {
         int                              _address_length;
         std::vector<connection*>         _connections;
         int                              _file_descriptor;
-        std::function<void(connection*)> _handler = [](const class connection* connection){};
+        std::function<void(connection*)> _handler = [](const class connection* connection){ };
         std::thread                      _listener;
         std::mutex                       _mutex;
-        std::atomic<bool>                _shutdown = false;
+        std::atomic<bool>                _shut_down = false;
 
         // Member Functions
 

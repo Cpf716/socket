@@ -1,8 +1,8 @@
 # Socket SDK for C++
 
-Thank you for checking out the <i>Socket SDK for C++</i>!
+Thanks for checking out my socket SDK for C++!
 
-It extends C sockets to equip developers with powerful, object-oriented integration.
+It extends C sockets to give you a head start on low-level integration.
 
 ## Examples
 

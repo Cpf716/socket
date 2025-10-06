@@ -44,10 +44,6 @@ namespace mysocket {
         this->_what = std::strerror(this->_errnum);
     }
 
-    error::error(const std::string what) {
-        this->_what = what;
-    }
-
     tcp_client::tcp_client(const std::string host, const int port) {
         this->_file_descriptor = ::socket(AF_INET, SOCK_STREAM, 0);
             
@@ -111,7 +107,7 @@ namespace mysocket {
         
         this->_listener = std::thread([&]{
             while (true) {
-                if (this->_shutdown.load())
+                if (this->_shut_down.load())
                     return;
                 
                 // Returns nonnegative file descriptor or -1 for error
@@ -246,7 +242,7 @@ namespace mysocket {
     }
 
     void tcp_server::close() {
-        this->_shutdown.store(true);
+        this->_shut_down.store(true);
         
         if (::close(this->_file_descriptor))
             throw mysocket::error(errno);
@@ -278,8 +274,7 @@ namespace mysocket {
 
         if (index == -1) {
             this->_mutex.unlock();
-
-            throw mysocket::error("Unknown error");
+            return;
         }
 
         try {
@@ -319,17 +314,10 @@ namespace mysocket {
     std::string udp_socket::recvfrom() const {
         char      buff[1024];
         socklen_t addrlen = sizeof(* this->_address);
-        ssize_t   len = ::recvfrom(
-            this->_file_descriptor,
-            (char *)buff,
-            1024,
-            MSG_WAITALL,
-            (struct sockaddr *)this->_address,
-            &addrlen
-        );
+        ssize_t   len = ::recvfrom(this->_file_descriptor, (char *)buff, 1024, MSG_WAITALL, (struct sockaddr *)this->_address, &addrlen);
         
         if (len == -1)
-            throw mysocket::error("Unknown error");
+            throw mysocket::error(errno);
         
         buff[len] = '\0';
         
@@ -345,17 +333,10 @@ namespace mysocket {
     }
 
     int udp_socket::sendto(const std::string message) const {
-        ssize_t len = ::sendto(
-            this->_file_descriptor,
-            (const char *)message.c_str(),
-            message.length(),
-            0,
-            (const struct sockaddr *)this->_address,
-            sizeof(* this->_address)
-        );
+        ssize_t len = ::sendto(this->_file_descriptor, (const char *)message.c_str(), message.length(), 0, (const struct sockaddr *)this->_address, sizeof(* this->_address));
         
         if (len == -1)
-            throw mysocket::error("Unknown error");
+            throw mysocket::error(errno);
         
         return (int)len;
     }
