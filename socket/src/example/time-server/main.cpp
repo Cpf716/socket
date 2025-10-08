@@ -11,8 +11,8 @@
 using namespace mysocket;
 using namespace std;
 
-tcp_server* server = NULL;
 tcp_client* client = NULL;
+tcp_server* server = NULL;
 
 void onsignal(int signum) {
     // Perform garbage collection
@@ -31,8 +31,13 @@ int main(int argc, const char* argv[]) {
         // Connect to server
         client = new tcp_client("127.0.0.1", 8080);
 
-        while (true)
-            cout << client->recv() << endl;
+        while (true) {
+            try {
+                cout << client->recv() << endl;
+            } catch (mysocket::error& e) {
+                break;
+            }
+        }
     }).detach();
 
     // Wait for connection
@@ -50,8 +55,12 @@ int main(int argc, const char* argv[]) {
         time_t now = time(0);
         char*  dt = ctime(&now);
 
-        connections[0]->send(string(dt));
+        try {
+            connections[0]->send(string(dt));
 
-        this_thread::sleep_for(chrono::milliseconds(1000));
+            this_thread::sleep_for(chrono::milliseconds(1000));
+        } catch (mysocket::error& e) {
+            break;
+        }
     }
 }
