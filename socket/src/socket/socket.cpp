@@ -243,18 +243,27 @@ namespace mysocket {
 
     void tcp_server::close() {
         this->_shut_down.store(true);
+        this->_mutex.lock();
         
-        if (::close(this->_file_descriptor))
+        if (::close(this->_file_descriptor)) {
+            this->_mutex.unlock();
+
             throw mysocket::error(errno);
+        }
         
         this->_listener.join();
 
         for (size_t i = 0; i < this->_connections.size(); i++) {
-            if (::close(this->_connections[i]->_file_descriptor))
+            if (::close(this->_connections[i]->_file_descriptor)) {
+                this->_mutex.unlock();
+
                 throw mysocket::error(errno);
+            }
                 
             delete this->_connections[i];
         }
+
+        this->_mutex.unlock();
         
         delete this;
     }
