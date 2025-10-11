@@ -281,10 +281,8 @@ namespace mysocket {
         
         int index = this->_find_connection(connection);
 
-        if (index == -1) {
-            this->_mutex.unlock();
-            return;
-        }
+        if (index == -1)
+            return this->_mutex.unlock();
 
         try {
             connection->_close();
